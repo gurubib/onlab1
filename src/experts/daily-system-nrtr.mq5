@@ -8,7 +8,7 @@
 #property version   "1.00"
 
 #include <Trade\Trade.mqh>
-#include <TrailingStop.mqh>
+//#include <TrailingStop.mqh>
 
 CTrade trade;
 
@@ -17,34 +17,14 @@ input int lossInPips = 20;
 input int profitInPips = 110;
 input double volumeInLots = 1.0;
 
-ParabolicTrailingStop trailingStop(trade);
+//NRTRTrailingStop trailingStop(trade);
 
-input double trailingSARStep = 0.02;
-input double trailingSARMax = 0.2;
-
-int OnInit()
-{
-   trailingStop.Init(Symbol(), Period(), true, true);
-   
-   if (!trailingStop.SetParameters(trailingSARStep, trailingSARMax))
-   {
-      Alert("Error during trailing stop setup!");
-      return -1;
-   }
-   
-   trailingStop.StartTimer();
-   
-   return(INIT_SUCCEEDED);
-}
-
-void OnTimer()
-{
-   trailingStop.Refresh();
-}
+input int trailingNRTRPeriod = 58;
+input double trailingNRTRK =  2;
 
 void OnTick()
 {
-   trailingStop.DoStopLoss();
+//   trailingStop.DoStopLoss();
    
    static bool isFirstTick = true;
    static int ticket = 0;
@@ -63,11 +43,13 @@ void OnTick()
          double openAtStart = iOpen(Symbol(), Period(), startHour);
          double lastOpen = iOpen(Symbol(), Period(), 0);
          
-         if(lastOpen < openAtStart)
+         string signal = getNRTRSignal();
+         
+         if(lastOpen < openAtStart && signal == "BUY")
          {
             Buy();
          }
-         else if (lastOpen > openAtStart)
+         else if (lastOpen > openAtStart && signal == "SELL")
          {
             Sell();
          }
@@ -150,5 +132,27 @@ double pipPoint()
    return Point() * 10;
 }
 
+string getNRTRSignal()
+{
+   int NRTRHandle = iCustom(Symbol(), Period(), "NRTR", trailingNRTRPeriod, trailingNRTRK);
 
-
+   double supBuf[1];
+   double resBuf[1];
+   
+   CopyBuffer(NRTRHandle, 0, 0, 1, supBuf);
+   CopyBuffer(NRTRHandle, 1, 0, 1, resBuf);
+   
+   if (supBuf[0] != 0)
+   {
+      return "BUY";
+   }
+   else if (resBuf[0] != 0)
+   {
+      return "SELL";
+   }
+   else
+   {
+      return "NONE";
+   }
+   
+}

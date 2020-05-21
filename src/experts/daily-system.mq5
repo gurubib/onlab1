@@ -11,9 +11,9 @@
 
 CTrade trade;
 
-input int startHour = 9;
+input int startHour = 6;
 input int lossInPips = 20;
-input int profitInPips = 40;
+input int profitInPips = 110;
 input double volumeInLots = 1.0;
 
 void OnTick()

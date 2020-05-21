@@ -8,7 +8,7 @@
 #property version   "1.00"
 
 #include <Trade\Trade.mqh>
-#include <TrailingStop.mqh>
+//#include <TrailingStop.mqh>
 
 CTrade trade;
 
@@ -17,35 +17,8 @@ input int lossInPips = 20;
 input int profitInPips = 110;
 input double volumeInLots = 1.0;
 
-ParabolicTrailingStop trailingStop(trade);
-
-input double trailingSARStep = 0.02;
-input double trailingSARMax = 0.2;
-
-int OnInit()
-{
-   trailingStop.Init(Symbol(), Period(), true, true);
-   
-   if (!trailingStop.SetParameters(trailingSARStep, trailingSARMax))
-   {
-      Alert("Error during trailing stop setup!");
-      return -1;
-   }
-   
-   trailingStop.StartTimer();
-   
-   return(INIT_SUCCEEDED);
-}
-
-void OnTimer()
-{
-   trailingStop.Refresh();
-}
-
 void OnTick()
-{
-   trailingStop.DoStopLoss();
-   
+{   
    static bool isFirstTick = true;
    static int ticket = 0;
 
@@ -63,11 +36,13 @@ void OnTick()
          double openAtStart = iOpen(Symbol(), Period(), startHour);
          double lastOpen = iOpen(Symbol(), Period(), 0);
          
-         if(lastOpen < openAtStart)
+         string signal = GetSARSignal();
+         
+         if(lastOpen < openAtStart && signal == "BUY")
          {
             Buy();
          }
-         else if (lastOpen > openAtStart)
+         else if (lastOpen > openAtStart && signal == "SELL")
          {
             Sell();
          }
@@ -148,6 +123,29 @@ double getBidPrice()
 double pipPoint()
 {
    return Point() * 10;
+}
+
+string GetSARSignal()
+{
+   int sarHandle = iSAR(Symbol(), Period(), 0.02, 0.2);
+
+   double indBuf[1];
+   CopyBuffer(sarHandle, 0, 0, 1, indBuf);
+   double sarValue = indBuf[0];
+   
+   double priceBuf[1];
+   CopyClose(Symbol(), Period(), 0, 1, priceBuf);
+   double priceValue = priceBuf[0];
+   
+   
+   if (sarValue > priceValue)
+   {
+      return "SELL";
+   }
+   else
+   {
+      return "BUY";
+   }     
 }
 
 
