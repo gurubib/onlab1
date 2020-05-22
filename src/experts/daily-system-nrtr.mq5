@@ -8,7 +8,6 @@
 #property version   "1.00"
 
 #include <Trade\Trade.mqh>
-//#include <TrailingStop.mqh>
 
 CTrade trade;
 
@@ -17,7 +16,6 @@ input int lossInPips = 20;
 input int profitInPips = 110;
 input double volumeInLots = 1.0;
 
-//NRTRTrailingStop trailingStop(trade);
 
 input int trailingNRTRPeriod = 58;
 input double trailingNRTRK =  2;
